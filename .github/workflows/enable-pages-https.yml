@@ -1,0 +1,26 @@
+name: Enable Pages HTTPS
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+  pages: write
+
+jobs:
+  enforce-https:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable HTTPS and disable this workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          WORKFLOW: enable-pages-https.yml
+        run: |
+          if [[ "$(gh api "repos/$REPOSITORY/pages" --jq '.https_enforced')" != "true" ]]; then
+            gh api --method PUT "repos/$REPOSITORY/pages" -F https_enforced=true
+          fi
+          gh api --method PUT "repos/$REPOSITORY/actions/workflows/$WORKFLOW/disable"
